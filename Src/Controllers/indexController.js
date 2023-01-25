@@ -1,70 +1,45 @@
 import User from "../Models/userModel.js"
-
+import UsersDAO from "../DAO/UserDAO.js"
 //CRUD - CREATE READ UPDATE DELETE
 //estrutura app.verbo(caminho, açãoParaEsseCaminho)
 //request == Entrada, response == saida
 //caminho "/"(main/index) = caminho principal = localhost padrão
 const indexController = (app, db) => {
+
+  const dao = new UsersDAO(db)
+
   //READ = GET
-  app.get("/", (request, response) => {
-    let SQL = "SELECT * FROM user";
-
-    new Promise((res, rej) => {
-      db.all(
-        SQL, 
-
-        (erro, linhas) => {
-        if (!erro) {
-          res(linhas);
-        } 
-
-        else {
-          rej(erro);
-        }
-      });
-    })
-      .then((resultado) => response.json(resultado))
-      .catch((erro) => console.log(erro));
+  app.get("/", async (request, response) => {
+    try{
+      const retorno = await dao.selecionarDados()
+      response.json(retorno)
+    }
+    catch(erro){
+      console.log(erro)
+    }
   });
 
   //CREATE = POST
-  app.post("/", (request, response) => {
-
-    const usuario = new User(
-      request.body.nome,
-      request.body.email,
-      request.body.senha
-    );
-
-    let SQL = "INSERT INTO user(id, nome, email, senha) VALUES (?,?,?,?)";
-
-    new Promise((res, rej) => {
-      db.all(
-        SQL,
-        [
-            usuario.id, 
-            usuario.nome, 
-            usuario.email, 
-            usuario.senha
-        ],
-        
-        (erro) => {
-          if (!erro) {
-            res("Usuario cadastrado com sucesso");
-          } else {
-            rej(erro);
-          }
-        }
+  app.post("/", async (request, response) => {
+    try{
+      const usuario = new User(
+        request.body.nome,
+        request.body.email,
+        request.body.senha
       );
-    })
-      .then((resultado) => response.send(resultado))
-      .catch((erro) => console.log(erro));
+
+      const retorno = await dao.criarUsuario(usuario)
+      response.json(retorno)
+    }
+    catch(erro){
+      console.log(erro)
+    }  
   });
 
   //UPDATE = PUT
-  app.put("/", (request, response) => {
+  app.put("/:id", (request, response) => {
     
-    let SQL = "UPDATE user SET nome = ?, email = ?, senha = ? WHERE nome = Diogenes";
+    let SQL = "UPDATE user SET nome = ?, email = ?, senha = ? WHERE id = ?";
 
     new Promise((res, rej) => {
       db.run(
@@ -72,11 +47,12 @@ const indexController = (app, db) => {
         [
             request.body.nome, 
             request.body.email, 
-            request.body.senha
+            request.body.senha,
+            request.params.id
         ],
         (erro) => {
           if (!erro) {
-            res("Usuario cadastrado com sucesso");
+            res("Usuario alterado com sucesso");
           } else {
             rej(erro);
           }
@@ -88,7 +64,18 @@ const indexController = (app, db) => {
   });
 
   //DELETE = delete
-  app.delete("/:id", (request, response) => {});
+  app.delete("/:id", async (request, response) => {
+    
+    try {
+      const id = request.params.id
+      let retorno = await dao.deletarUsuario(id)
+      response.send(retorno)
+    } 
+    catch (error) {
+      console.log(erro)
+    }
+    
+  });
 };
 
 export default indexController;
