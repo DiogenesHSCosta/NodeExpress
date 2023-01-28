@@ -39,15 +39,21 @@ const indexController = (app, db) => {
   //UPDATE = PUT
   app.put("/:id", (request, response) => {
     
+    const usuario = new User(
+      request.body.nome,
+      request.body.email,
+      request.body.senha
+    );
+
     let SQL = "UPDATE user SET nome = ?, email = ?, senha = ? WHERE id = ?";
 
     new Promise((res, rej) => {
       db.run(
         SQL,
         [
-            request.body.nome, 
-            request.body.email, 
-            request.body.senha,
+            usuario.nome, 
+            usuario.email, 
+            usuario.senha,
             request.params.id
         ],
         (erro) => {
